@@ -24,6 +24,19 @@ function check(condition, message) {
   if (!condition) failures.push(message);
 }
 
+function gitGrep(pattern) {
+  try {
+    return execFileSync(
+      'git',
+      ['grep', '-l', pattern, '--', '.', ':!scripts/distro-check.mjs'],
+      { cwd: repoRoot, encoding: 'utf8' },
+    ).trim();
+  } catch (error) {
+    // git grep exits 1 when nothing matches.
+    return String(error.stdout || '').trim();
+  }
+}
+
 // --- PKGBUILD vs manifests ---
 const version = String(packageJson.version);
 const pkgver = pkgbuild.match(/^pkgver=([^\s]+)/m)?.[1];
@@ -75,17 +88,13 @@ check(desktop.includes('Name=ResuFlow') && desktop.includes('Exec=resuflow'), 'D
 check(desktop.includes('Icon=resuflow'), 'Desktop entry must reference the resuflow icon theme name.');
 const metainfoRelease = metainfo.match(/<release\s+version="([^"]+)"/)?.[1];
 check(metainfoRelease === version, `Metainfo must list a <release version="${version}"/> entry as the newest release (found ${metainfoRelease || 'none'}).`);
-check(!desktop.includes('flatpak') && !desktop.toLowerCase().includes('resume-builder'), 'Desktop entry must not reference the old distribution.');
+check(!desktop.toLowerCase().includes('resume-builder'), 'Desktop entry must not reference the old distribution.');
 
-// --- No Flatpak leftovers anywhere tracked ---
-let tracked = '';
-try {
-  tracked = execFileSync('git', ['grep', '-il', 'flatpak'], { cwd: repoRoot, encoding: 'utf8' }).trim();
-} catch (error) {
-  // git grep exits 1 when nothing matches, which is the desired state.
-  tracked = String(error.stdout || '').trim();
+// Guard against the retired shared Flatpak distribution returning.
+for (const pattern of ['flatpak.exolithelabs', 'exolithelabs-flatpak-repo', 'FLATPAK_', '.flatpakref']) {
+  const hits = gitGrep(pattern);
+  check(hits === '', `Tracked files must not mention retired pattern ${pattern}, found: ${hits || '(none)'}.`);
 }
-check(tracked === '', `No tracked file may mention flatpak, found: ${tracked || '(none)'}.`);
 
 if (failures.length > 0) {
   console.error(`Distro packaging check failed:\n${failures.map((failure) => `  - ${failure}`).join('\n')}`);
