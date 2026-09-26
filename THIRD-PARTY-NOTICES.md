@@ -1,7 +1,7 @@
 # Third-party notices
 
-Resume Builder includes third-party software. Their licenses remain separate
-from the Apache-2.0 license for Resume Builder itself.
+ResuFlow includes third-party software. Their licenses remain separate
+from the Apache-2.0 license for ResuFlow itself.
 
 ## Direct JavaScript dependencies
 

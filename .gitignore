@@ -21,11 +21,13 @@ desktop/*.dll
 credentials.json
 
 # Resume workspaces belong outside the source repository.
+/resuflow.json
 /resume-builder.json
 /profile.md
 /memory.md
 /resumes/
 /settings.json
+/.resuflow/
 /.resume-builder/
 
 .DS_Store
@@ -36,3 +38,9 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Arch packaging build output.
+distro/arch/pkg/
+distro/arch/src/
+distro/arch/*.tar.gz
+*.pkg.tar.zst

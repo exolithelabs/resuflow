@@ -85,10 +85,10 @@ async function checkForLatestRelease({ manual = false } = {}) {
   try {
     const release = await api(`releases/latest${manual ? '?refresh=1' : ''}`);
     if (!release.available || !release.tagName || !release.url) {
-      if (manual) showUpdateCheckStatus(`Resume Builder ${release.currentVersion} is up to date.`);
+      if (manual) showUpdateCheckStatus(`ResuFlow ${release.currentVersion} is up to date.`);
       return;
     }
-    if (!manual && localStorage.getItem('resume-builder-dismissed-release') === release.tagName) return;
+    if (!manual && localStorage.getItem('resuflow-dismissed-release') === release.tagName) return;
 
     releaseTitle.textContent = `${release.name || release.tagName} is available.`;
     releaseDetail.textContent = `You are using ${release.currentVersion}. Review the release before updating.`;
@@ -96,7 +96,7 @@ async function checkForLatestRelease({ manual = false } = {}) {
     releaseNotice.hidden = false;
 
     releaseDismiss.onclick = () => {
-      localStorage.setItem('resume-builder-dismissed-release', release.tagName);
+      localStorage.setItem('resuflow-dismissed-release', release.tagName);
       releaseNotice.hidden = true;
     };
   } catch {
@@ -372,7 +372,7 @@ async function renderVault() {
     <section class="doc">
       <form id="vault-form" class="empty-state">
         <h2>Vault</h2>
-        <p class="muted">Your resumes live in a vault folder, not in the app install. The default vault is used when you run <code>resume-builder</code> without <code>--dir</code>.</p>
+        <p class="muted">Your resumes live in a vault folder, not in the app install. The default vault is used when you run <code>resuflow</code> without <code>--dir</code>.</p>
         <p><strong>Current:</strong> <code>${escapeHtml(workspace.root)}</code></p>
         <p><strong>Default:</strong> <code>${escapeHtml(workspace.defaultVault || workspace.root)}</code></p>
         <label class="field"><span>Vault path</span><input name="root" value="${escapeHtml(workspace.root)}" required /></label>
@@ -445,20 +445,20 @@ async function renderDocs() {
 
       <section class="docs-section" id="docs-overview">
         <h2>Overview</h2>
-        <p>Resume Builder is a local app. It does not run an LLM. You write Markdown in the UI, or you point Grok, Cursor, Codex, Gemini, or another agent at this process over MCP.</p>
+        <p>ResuFlow is a local app. It does not run an LLM. You write Markdown in the UI, or you point Grok, Cursor, Codex, Gemini, or another agent at this process over MCP.</p>
         <p>The product (this install) is separate from your data. Resumes live in a workspace folder under Documents; first launch creates a default vault automatically.</p>
       </section>
 
       <section class="docs-section" id="docs-install">
         <h2>Install and run</h2>
-        <p>Windows users can download the signed installer from the product website; Node.js and npm are bundled. Linux users install the signed Flatpak from the Exolithe Labs Flatpak repository.</p>
+        <p>Windows users can download the installer from the product website; Node.js and npm are bundled. On Arch Linux, install the pacman package from the latest GitHub release.</p>
         <pre>Windows: download and run the .exe installer
-Linux: flatpak install --user --from https://flatpak.exolithelabs.com/apps/io.github.exolithelabs.ResumeBuilder.flatpakref</pre>
+Linux (Arch): sudo pacman -U resuflow-linux-x86_64.pkg.tar.zst</pre>
         <ul>
-          <li><code>resume-builder</code> opens the desktop window by default.</li>
-          <li><code>resume-builder --browser</code> opens the same UI in a web browser.</li>
-          <li><code>resume-builder serve</code> starts the server only.</li>
-          <li>On Windows, download updates from the product website. On Linux, update with your software manager or <code>flatpak update io.github.exolithelabs.ResumeBuilder</code>.</li>
+          <li><code>resuflow</code> opens the desktop window by default.</li>
+          <li><code>resuflow --browser</code> opens the same UI in a web browser.</li>
+          <li><code>resuflow serve</code> starts the server only.</li>
+          <li>On Windows, download updates from the product website. On Arch Linux, install the newer package with <code>sudo pacman -U</code>.</li>
           <li>Removing the app does not remove your workspace.</li>
         </ul>
         <p>The UI is at <code>http://127.0.0.1:4173/</code> while the app is running.</p>
@@ -513,7 +513,7 @@ resumes/&lt;slug&gt;/dist/resume.pdf</pre>
         <p><code>${escapeHtml(info.url)}</code></p>
         <p>Example config:</p>
         <pre>${escapeHtml(snippet)}</pre>
-        <p>This configuration contains a private per-process bearer token. Do not publish or commit it; copy a fresh configuration after restarting Resume Builder.</p>
+        <p>This configuration contains a private per-process bearer token. Do not publish or commit it; copy a fresh configuration after restarting ResuFlow.</p>
         <p>Tools include list/get/write for resumes, profile, skills, and memory, plus create resume, enable-aware skill listing, and PDF-related files on disk after you export.</p>
       </section>
     </article>
@@ -632,7 +632,7 @@ async function api(endpoint, options = {}) {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      'X-Resume-Builder-Request': '1',
+      'X-ResuFlow-Request': '1',
       ...(options.headers || {}),
     },
   });
@@ -646,7 +646,7 @@ function withSlug(slug, options = {}) {
   return {
     ...options,
     headers: {
-      'X-Resume-Builder-Slug': String(slug),
+      'X-ResuFlow-Slug': String(slug),
       ...(options.headers || {}),
     },
   };

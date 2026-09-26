@@ -1,4 +1,4 @@
-name: Windows desktop download
+name: Desktop downloads
 
 on:
   workflow_dispatch:
@@ -60,7 +60,7 @@ jobs:
             throw 'WINDOWS_CERTIFICATE and WINDOWS_CERTIFICATE_PASSWORD must either both be configured or both be absent.'
           }
 
-          $certificatePath = Join-Path $env:RUNNER_TEMP 'resume-builder-signing.pfx'
+          $certificatePath = Join-Path $env:RUNNER_TEMP 'resuflow-signing.pfx'
           [IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
           $password = ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
           $importedCertificates = Import-PfxCertificate -FilePath $certificatePath -CertStoreLocation Cert:\CurrentUser\My -Password $password
@@ -90,7 +90,7 @@ jobs:
         shell: pwsh
         run: |
           $targets = @(
-            (Get-Item src-tauri/target/release/resume-builder.exe),
+            (Get-Item src-tauri/target/release/resuflow.exe),
             (Get-ChildItem src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1)
           )
           foreach ($target in $targets) {
@@ -105,7 +105,7 @@ jobs:
         if: always() && steps.windows_signing.outputs.available == 'true'
         shell: pwsh
         run: |
-          Remove-Item -LiteralPath (Join-Path $env:RUNNER_TEMP 'resume-builder-signing.pfx') -Force -ErrorAction SilentlyContinue
+          Remove-Item -LiteralPath (Join-Path $env:RUNNER_TEMP 'resuflow-signing.pfx') -Force -ErrorAction SilentlyContinue
           if ($env:WINDOWS_CERTIFICATE_THUMBPRINT) {
             Remove-Item -LiteralPath "Cert:\CurrentUser\My\$env:WINDOWS_CERTIFICATE_THUMBPRINT" -Force -ErrorAction SilentlyContinue
           }
@@ -116,23 +116,133 @@ jobs:
           $installer = Get-ChildItem src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
           if (-not $installer) { throw 'Windows installer was not created.' }
           $downloadDirectory = New-Item -ItemType Directory -Force dist/windows
-          $stableInstaller = Join-Path $downloadDirectory.FullName 'Resume-Builder-Windows-x64-setup.exe'
+          $stableInstaller = Join-Path $downloadDirectory.FullName 'ResuFlow-Windows-x64-setup.exe'
           Copy-Item -LiteralPath $installer.FullName -Destination $stableInstaller
           $hash = (Get-FileHash -Algorithm SHA256 $stableInstaller).Hash.ToLowerInvariant()
-          "$hash  Resume-Builder-Windows-x64-setup.exe" | Set-Content -Encoding ascii "$stableInstaller.sha256"
+          "$hash  ResuFlow-Windows-x64-setup.exe" | Set-Content -Encoding ascii "$stableInstaller.sha256"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: windows-installer
           path: |
-            dist/windows/Resume-Builder-Windows-x64-setup.exe
-            dist/windows/Resume-Builder-Windows-x64-setup.exe.sha256
+            dist/windows/ResuFlow-Windows-x64-setup.exe
+            dist/windows/ResuFlow-Windows-x64-setup.exe.sha256
           if-no-files-found: error
+
+  build-linux:
+    name: Arch Linux package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      package_file: ${{ steps.arch_package.outputs.package_file }}
+      package_arch: ${{ steps.arch_package.outputs.package_arch }}
+    container:
+      image: archlinux:base
+    steps:
+      - name: Bootstrap the container
+        shell: bash
+        run: |
+          set -euo pipefail
+          # JavaScript actions run inside this container, so node must exist before any uses: step.
+          pacman -Sy --noconfirm --needed archlinux-keyring >/dev/null
+          pacman -Syu --noconfirm --needed git nodejs
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Build the Arch package and its release inputs
+        id: arch_package
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x distro/linux/build-arch-package.sh
+          OUT_DIR="$RUNNER_TEMP/dist-linux" bash distro/linux/build-arch-package.sh | tee "$RUNNER_TEMP/arch-build.log"
+          package_file="$(sed -n 's|^PACKAGE_FILE=||p' "$RUNNER_TEMP/arch-build.log" | tail -n 1)"
+          if [[ -z "$package_file" || ! -f "$package_file" ]]; then
+            echo 'Arch package was not created.' >&2
+            exit 1
+          fi
+          package_name="$(basename "$package_file")"
+          package_stem="${package_name%.pkg.tar.zst}"
+          echo "package_file=$package_name" >> "$GITHUB_OUTPUT"
+          echo "package_arch=${package_stem##*-}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: linux-package
+          path: |
+            ${{ runner.temp }}/dist-linux/*.pkg.tar.zst
+            ${{ runner.temp }}/dist-linux/*.pkg.tar.zst.sha256
+            ${{ runner.temp }}/dist-linux/resuflow-*.tar.gz
+            ${{ runner.temp }}/dist-linux/resuflow-*.tar.gz.sha256
+          if-no-files-found: error
+
+  verify-linux:
+    name: Verify the Arch package on a clean system
+    needs: build-linux
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container:
+      image: archlinux:base
+    steps:
+      - name: Bootstrap the container
+        shell: bash
+        run: |
+          set -euo pipefail
+          pacman -Sy --noconfirm --needed archlinux-keyring >/dev/null
+          pacman -Syu --noconfirm --needed nodejs xorg-server-xvfb
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: linux-package
+          path: dist/linux
+
+      - name: Install the package and exercise the shipped entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          package="dist/linux/${{ needs.build-linux.outputs.package_file }}"
+          test -f "$package"
+          pacman -U --noconfirm "$package"
+          pacman -Qi resuflow
+
+          test -x /usr/bin/resuflow
+          test -L /usr/bin/resuflow-cli
+          test -f /usr/lib/resuflow/app/bin/resuflow.mjs
+          test -f /usr/lib/resuflow/runtime/node
+          test -f /usr/share/licenses/resuflow/LICENSE
+          desktop-file-validate /usr/share/applications/resuflow.desktop
+
+          xvfb-run -a resuflow --help | grep -q 'local web app for role-specific resumes'
+          xvfb-run -a resuflow-cli --help | grep -q 'local web app for role-specific resumes'
+
+          vault="$RUNNER_TEMP/resuflow-vault"
+          xvfb-run -a resuflow init "$vault"
+          timeout 60 xvfb-run -a resuflow serve --dir "$vault" --port 4173 --no-open >/dev/null 2>&1 &
+          healthy=0
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/api/health >/dev/null; then
+              healthy=1
+              break
+            fi
+            sleep 1
+          done
+          if [[ "$healthy" -ne 1 ]]; then
+            echo 'The packaged Node sidecar did not serve the local API.' >&2
+            exit 1
+          fi
+
+          pacman -Rns --noconfirm resuflow
+          if command -v resuflow >/dev/null 2>&1 || [[ -e /usr/bin/resuflow ]]; then
+            echo 'resuflow was not fully removed by pacman.' >&2
+            exit 1
+          fi
 
   publish-windows-release:
     name: Publish Windows release
     if: github.ref_type == 'tag'
-    needs: build-windows
+    needs: [build-windows, verify-linux]
     runs-on: windows-latest
     permissions:
       contents: write
@@ -147,17 +257,17 @@ jobs:
       - name: Attest Windows installer provenance
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
-          subject-path: dist/windows/Resume-Builder-Windows-x64-setup.exe
+          subject-path: dist/windows/ResuFlow-Windows-x64-setup.exe
 
-      - name: Publish GitHub Release
+      - name: Publish Windows installer
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           WINDOWS_INSTALLER_SIGNED: ${{ needs.build-windows.outputs.signed }}
         run: |
-          $installer = Get-Item dist/windows/Resume-Builder-Windows-x64-setup.exe
-          $checksum = Get-Item dist/windows/Resume-Builder-Windows-x64-setup.exe.sha256
+          $installer = Get-Item dist/windows/ResuFlow-Windows-x64-setup.exe
+          $checksum = Get-Item dist/windows/ResuFlow-Windows-x64-setup.exe.sha256
           if ($env:WINDOWS_INSTALLER_SIGNED -eq 'true') {
             $distributionNote = 'The Windows installer is Authenticode-signed. Verify the accompanying SHA-256 checksum before installation.'
           } else {
@@ -167,46 +277,69 @@ jobs:
           if ($LASTEXITCODE -eq 0) {
             gh release upload $env:GITHUB_REF_NAME $installer.FullName $checksum.FullName --clobber
           } else {
-            gh release create $env:GITHUB_REF_NAME $installer.FullName $checksum.FullName --verify-tag --generate-notes --notes $distributionNote --title "Resume Builder $env:GITHUB_REF_NAME"
+            gh release create $env:GITHUB_REF_NAME $installer.FullName $checksum.FullName --verify-tag --generate-notes --notes $distributionNote --title "ResuFlow $env:GITHUB_REF_NAME"
           }
-          $allowedAssets = @(
-            'Resume-Builder-Windows-x64-setup.exe',
-            'Resume-Builder-Windows-x64-setup.exe.sha256'
-          )
-          $releaseAssets = gh release view $env:GITHUB_REF_NAME --json assets --jq '.assets[].name'
-          foreach ($asset in $releaseAssets) {
-            if ($asset -and $asset -notin $allowedAssets) {
-              gh release delete-asset $env:GITHUB_REF_NAME $asset --yes
-              if ($LASTEXITCODE -ne 0) { throw "Could not remove obsolete release asset: $asset" }
-            }
-          }
-          gh release edit $env:GITHUB_REF_NAME --target $env:GITHUB_SHA --verify-tag --draft=false --prerelease=false --latest
 
-  publish-flatpak:
-    name: Request Flatpak publication
+  publish-linux-release:
+    name: Publish Linux release
     if: github.ref_type == 'tag'
-    needs: build-windows
-    permissions:
-      contents: read
+    needs: [build-linux, verify-linux, publish-windows-release]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: linux-package
+          path: dist/linux
 
-      - name: Dispatch immutable release to the Flatpak repository
-        env:
-          GH_TOKEN: ${{ secrets.FLATPAK_REPOSITORY_TOKEN }}
+      - name: Prepare the stable download name
+        shell: bash
         run: |
-          if [[ -z "$GH_TOKEN" ]]; then
-            echo "FLATPAK_REPOSITORY_TOKEN is required to publish Linux releases." >&2
-            exit 1
-          fi
-          source_commit=$(git rev-parse HEAD)
-          version=${GITHUB_REF_NAME#v}
-          jq -n \
-            --arg commit "$source_commit" \
-            --arg tag "$GITHUB_REF_NAME" \
-            --arg version "$version" \
-            '{event_type:"resume-builder-release",client_payload:{source_commit:$commit,release_tag:$tag,version:$version}}' | \
-            gh api --method POST \
-              repos/exolithelabs/exolithelabs-flatpak-repo/dispatches \
-              --input -
+          set -euo pipefail
+          arch="${{ needs.build-linux.outputs.package_arch }}"
+          built="$(ls dist/linux/*.pkg.tar.zst)"
+          stable="resuflow-linux-$arch.pkg.tar.zst"
+          cp "$built" "dist/linux/$stable"
+          (cd dist/linux && sha256sum "$stable" > "$stable.sha256")
+
+      - name: Attest Linux package and packaging inputs
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: |
+            dist/linux/*.pkg.tar.zst
+            dist/linux/*.pkg.tar.zst.sha256
+            dist/linux/resuflow-*.tar.gz
+            dist/linux/resuflow-*.tar.gz.sha256
+
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          for asset in dist/linux/*; do
+            gh release upload "$GITHUB_REF_NAME" "$asset" --clobber
+          done
+
+          allowed=('ResuFlow-Windows-x64-setup.exe' 'ResuFlow-Windows-x64-setup.exe.sha256')
+          while IFS= read -r asset; do
+            allowed+=("$(basename "$asset")")
+          done < <(find dist/linux -maxdepth 1 -type f)
+
+          while IFS= read -r name; do
+            if [[ -z "$name" ]]; then continue; fi
+            keep=0
+            for allowed_name in "${allowed[@]}"; do
+              if [[ "$name" == "$allowed_name" ]]; then keep=1; fi
+            done
+            if [[ "$keep" -eq 0 ]]; then
+              echo "Removing obsolete release asset: $name"
+              gh release delete-asset "$GITHUB_REF_NAME" "$name" --yes
+            fi
+          done < <(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name')
+
+          gh release edit "$GITHUB_REF_NAME" --target "$GITHUB_SHA" --verify-tag --draft=false --prerelease=false --latest

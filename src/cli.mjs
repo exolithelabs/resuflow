@@ -11,7 +11,7 @@ import { openBrowser } from './browser.mjs';
 
 try {
   const args = parseArgs(process.argv.slice(2));
-  const createDefaultWorkspace = args.sidecar || process.env.RESUME_BUILDER_PACKAGED === '1';
+  const createDefaultWorkspace = args.sidecar || process.env.RESUFLOW_PACKAGED === '1';
 
   if (args.help || args.command === 'help') {
     printHelp();
@@ -35,7 +35,7 @@ try {
     const workspace = await initWorkspace(target);
     await rememberVault(workspace.root);
     console.log(`Workspace ready: ${workspace.root}`);
-    console.log('This is now the default vault. Next: resume-builder');
+    console.log('This is now the default vault. Next: resuflow');
     process.exit(0);
   }
 
@@ -91,7 +91,7 @@ async function serveWorkspace(workspace, port, open) {
     workspaceRoot: workspace.root,
     port,
   });
-  console.log('Resume Builder');
+  console.log('ResuFlow');
   console.log(`Workspace: ${workspace.root}`);
   console.log(`Web UI:    ${url}`);
   console.log(`MCP:       ${url.replace(/\/$/, '')}/mcp`);
@@ -111,12 +111,12 @@ async function resolveWorkspace(dir, { createDefault = false } = {}) {
     const config = await loadUserConfig();
     if (config.defaultVault) return findWorkspace(config.defaultVault);
     if (createDefault) {
-      const workspace = await initWorkspace(path.join(homedir(), 'Documents', 'Resume Builder'));
+      const workspace = await initWorkspace(path.join(homedir(), 'Documents', 'ResuFlow'));
       await rememberVault(workspace.root);
       return workspace;
     }
     throw new WorkspaceError(
-      'No vault found. Run `resume-builder init <dir>` or set a default vault in the app (Settings → Vault).',
+      'No vault found. Run `resuflow init <dir>` or set a default vault in the app (Settings → Vault).',
     );
   }
 }
@@ -193,21 +193,22 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log(`Resume Builder — local web app for role-specific resumes
+  console.log(`ResuFlow — local web app for role-specific resumes
 
 Install:
   Windows: download the installer from the product website.
-  Linux: install the Flatpak from the Exolithe Labs Flatpak repository.
+  Linux (Arch): download resuflow-linux-<arch>.pkg.tar.zst from the latest
+  GitHub release and install it with pacman.
 
 Usage:
-  resume-builder [dir]               Run (desktop window by default)
-  resume-builder run [dir]           Same as the default
-  resume-builder desktop [dir]       Same as run
-  resume-builder --browser [dir]     Start the server and open a web browser
-  resume-builder serve [dir]         Start the localhost server only
-  resume-builder init [dir]          Create a data workspace
-  resume-builder build [dir]         Generate PDFs for every resume
-  resume-builder --help
+  resuflow [dir]               Run (desktop window by default)
+  resuflow run [dir]           Same as the default
+  resuflow desktop [dir]       Same as run
+  resuflow --browser [dir]     Start the server and open a web browser
+  resuflow serve [dir]         Start the localhost server only
+  resuflow init [dir]          Create a data workspace
+  resuflow build [dir]         Generate PDFs for every resume
+  resuflow --help
 
 Options:
   --dir <path>     Workspace directory

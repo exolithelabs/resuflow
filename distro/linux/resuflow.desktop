@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ResuFlow
+GenericName=Resume builder
+Comment=Build tailored, ATS-friendly resumes in a local workspace.
+Exec=resuflow
+Icon=resuflow
+Terminal=false
+Categories=Office;Utility;
+Keywords=resume;cv;
+StartupNotify=true
+StartupWMClass=resuflow

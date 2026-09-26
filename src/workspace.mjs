@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, rm, access } from 'node:fs/promises';
+import { access, mkdir, readFile, readdir, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 import {
   excerpt,
@@ -12,7 +12,8 @@ import {
 import { atomicWriteFile } from './atomic-write.mjs';
 
 export const SCHEMA_VERSION = 1;
-export const WORKSPACE_FILE = 'resume-builder.json';
+export const WORKSPACE_FILE = 'resuflow.json';
+export const LEGACY_WORKSPACE_FILE = 'resume-builder.json';
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export class WorkspaceError extends Error {
@@ -63,14 +64,14 @@ export function assertSlug(slug, kind = 'resume') {
 
 export async function findWorkspace(startDir) {
   const dir = path.resolve(startDir || process.cwd());
-  const marker = path.join(dir, WORKSPACE_FILE);
+  const marker = await resolveWorkspaceMarker(dir);
   let markerText;
   try {
     markerText = await readFile(marker, 'utf8');
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
     throw new WorkspaceError(
-      `No resume workspace found in ${dir}. Run \`resume-builder init\` first.`,
+      `No resume workspace found in ${dir}. Run \`resuflow init\` first.`,
       400,
     );
   }
@@ -84,6 +85,26 @@ export async function findWorkspace(startDir) {
   return { root: dir, marker: markerPayload };
 }
 
+/**
+ * Resolve the workspace marker, migrating a legacy Resume Builder marker in place so
+ * existing vaults keep working without a re-init step. Falls back to reading the legacy
+ * file when it cannot be renamed, for example on a read-only volume.
+ */
+async function resolveWorkspaceMarker(dir) {
+  const marker = path.join(dir, WORKSPACE_FILE);
+  if (await exists(marker)) return marker;
+
+  const legacyMarker = path.join(dir, LEGACY_WORKSPACE_FILE);
+  if (!(await exists(legacyMarker))) return marker;
+
+  try {
+    await rename(legacyMarker, marker);
+    return marker;
+  } catch {
+    return legacyMarker;
+  }
+}
+
 export async function initWorkspace(targetDir) {
   const root = path.resolve(targetDir || process.cwd());
   await mkdir(root, { recursive: true });
@@ -91,7 +112,7 @@ export async function initWorkspace(targetDir) {
   await mkdir(path.join(root, 'dist'), { recursive: true });
   await mkdir(path.join(root, 'skills'), { recursive: true });
 
-  const markerPath = path.join(root, WORKSPACE_FILE);
+  const markerPath = await resolveWorkspaceMarker(root);
   const profilePath = path.join(root, 'profile.md');
   const readmePath = path.join(root, 'README.md');
   const gitignorePath = path.join(root, '.gitignore');
@@ -346,7 +367,7 @@ async function migrateWorkspaceMarker(markerPath, payload) {
   }
   if (version > SCHEMA_VERSION) {
     throw new WorkspaceError(
-      `This workspace uses schema version ${version}, but this app supports up to ${SCHEMA_VERSION}. Update Resume Builder first.`,
+      `This workspace uses schema version ${version}, but this app supports up to ${SCHEMA_VERSION}. Update ResuFlow first.`,
       409,
     );
   }
@@ -364,7 +385,7 @@ async function migrateWorkspaceMarker(markerPath, payload) {
 function dataRepoReadme() {
   return `# Resume workspace
 
-This folder is **your resume data**, not the Resume Builder app.
+This folder is **your resume data**, not the ResuFlow app.
 
 - \`profile.md\` — shared name, contact details, and links
 - \`memory.md\` — durable notes for the resume agent
@@ -376,7 +397,7 @@ This folder is **your resume data**, not the Resume Builder app.
 Edit everything in the local web UI:
 
 \`\`\`bash
-resume-builder
+resuflow
 \`\`\`
 
 This folder is your data, not the app. Git is optional; the app does not initialize a repository.

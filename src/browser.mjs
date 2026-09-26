@@ -14,7 +14,7 @@ export function openBrowser(url) {
 export function normalizeLocalAppUrl(value) {
   const url = new URL(String(value));
   if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(url.hostname)) {
-    throw new TypeError('Only a local Resume Builder URL can be opened.');
+    throw new TypeError('Only a local ResuFlow URL can be opened.');
   }
   return url.href;
 }

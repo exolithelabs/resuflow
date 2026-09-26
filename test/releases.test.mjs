@@ -15,8 +15,8 @@ test('recognizes a newer valid GitHub release', async () => {
     useCache: false,
     fetchImpl: async () => new Response(JSON.stringify({
       tag_name: 'v1.1.0',
-      name: 'Resume Builder 1.1.0',
-      html_url: 'https://github.com/exolithelabs/resume-builder/releases/tag/v1.1.0',
+      name: 'ResuFlow 1.1.0',
+      html_url: 'https://github.com/exolithelabs/resuflow/releases/tag/v1.1.0',
       published_at: '2026-09-12T00:00:00Z',
     })),
   });

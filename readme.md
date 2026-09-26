@@ -1,16 +1,16 @@
-# Resume Builder
+# ResuFlow
 
 Build focused, ATS-friendly resumes in a private local workspace.
 
 Software built by Dhiraj Yadav for his own use, shared here for anyone who finds it useful.
 
-Resume Builder combines a desktop editor, browser UI, CLI, PDF export, and an MCP endpoint for the AI agent you choose. Your profile and resumes remain ordinary Markdown files on your computer—the application does not upload them or bundle them into its installation.
+ResuFlow combines a desktop editor, browser UI, CLI, PDF export, and an MCP endpoint for the AI agent you choose. Your profile and resumes remain ordinary Markdown files on your computer—the application does not upload them or bundle them into its installation.
 
 [Overview](#overview) · [Features](#features) · [How it works](#how-it-works) · [Install](#install) · [CLI](#command-line) · [MCP](#connect-an-ai-agent-with-mcp) · [Privacy](#local-first-by-design) · [Development](#development) · [Releases](#releases-and-updates) · [License](#license)
 
 ## Overview
 
-Most resume tools lock career information inside a hosted account or proprietary document. Resume Builder keeps the application separate from the data: the app can be upgraded or removed without affecting the user's resume workspace.
+Most resume tools lock career information inside a hosted account or proprietary document. ResuFlow keeps the application separate from the data: the app can be upgraded or removed without affecting the user's resume workspace.
 
 Use the desktop window for a focused experience, open the same interface in a regular browser, automate work from the CLI, or connect an external AI agent over MCP.
 
@@ -42,7 +42,7 @@ Render the selected resume into print-ready A4 HTML and PDF. Chromium is install
 
 ### Bring your own AI agent
 
-Resume Builder does not run or require a built-in LLM. Connect Grok, Cursor, Codex, Gemini, or another MCP-compatible client and decide which provider receives the information you explicitly expose to it.
+ResuFlow does not run or require a built-in LLM. Connect Grok, Cursor, Codex, Gemini, or another MCP-compatible client and decide which provider receives the information you explicitly expose to it.
 
 ### Built-in writing guidance
 
@@ -65,11 +65,11 @@ Local server on 127.0.0.1
 User-controlled workspace
 ```
 
-On first desktop launch, Resume Builder creates `Documents/Resume Builder` unless another workspace is selected.
+On first desktop launch, ResuFlow creates `Documents/ResuFlow` unless another workspace is selected.
 
 ```text
-Resume Builder/
-  resume-builder.json
+ResuFlow/
+  resuflow.json
   profile.md
   memory.md
   skills/
@@ -87,68 +87,73 @@ The application never creates a Git repository in the workspace. Version control
 
 ### Windows
 
-[Download Resume Builder for Windows](https://github.com/exolithelabs/resume-builder/releases/latest/download/Resume-Builder-Windows-x64-setup.exe)
+[Download ResuFlow for Windows](https://github.com/exolithelabs/resuflow/releases/latest/download/ResuFlow-Windows-x64-setup.exe)
 
-[Download the SHA-256 checksum](https://github.com/exolithelabs/resume-builder/releases/latest/download/Resume-Builder-Windows-x64-setup.exe.sha256)
+[Download the SHA-256 checksum](https://github.com/exolithelabs/resuflow/releases/latest/download/ResuFlow-Windows-x64-setup.exe.sha256)
 
 1. Download the `*-setup.exe` installer and its `.sha256` checksum.
 2. Run the installer for the current Windows user.
-3. Open Resume Builder from the Start menu or a newly opened terminal.
+3. Open ResuFlow from the Start menu or a newly opened terminal.
 
 ```powershell
-resume-builder
+resuflow
 ```
 
-The installer adds Resume Builder to the current user's PATH. Uninstall it from **Windows Settings > Apps**; uninstall also removes the installer-managed PATH entry and never deletes resume workspaces.
+The installer adds ResuFlow to the current user's PATH. Uninstall it from **Windows Settings > Apps**; uninstall also removes the installer-managed PATH entry and never deletes resume workspaces.
 
 Windows packages include the Node sidecar, so users do not need Node.js, npm, Microsoft Store, or another package manager.
 
 Windows releases are currently unsigned and can display a Microsoft Defender SmartScreen **Unknown publisher** warning. Verify the published SHA-256 checksum before running the installer. Code signing may be added later when the project has an appropriate signing service.
 
-### Linux
+### Linux (Arch)
 
-#### Flatpak
+[Download the ResuFlow pacman package](https://github.com/exolithelabs/resuflow/releases/latest/download/resuflow-linux-x86_64.pkg.tar.zst)
 
-[Download the Resume Builder Flatpak reference](https://flatpak.exolithelabs.com/apps/io.github.exolithelabs.ResumeBuilder.flatpakref)
+[Download the SHA-256 checksum](https://github.com/exolithelabs/resuflow/releases/latest/download/resuflow-linux-x86_64.pkg.tar.zst.sha256)
 
-Or install it from a terminal:
+Or install it from a terminal (replace `x86_64` with `aarch64` on ARM machines):
 
 ```bash
-flatpak install --user --from \
-  https://flatpak.exolithelabs.com/apps/io.github.exolithelabs.ResumeBuilder.flatpakref
+curl -fsSLO \
+  https://github.com/exolithelabs/resuflow/releases/latest/download/resuflow-linux-x86_64.pkg.tar.zst{,.sha256}
+sha256sum -c resuflow-linux-x86_64.pkg.tar.zst.sha256
+sudo pacman -U resuflow-linux-x86_64.pkg.tar.zst
 ```
 
 Run it with:
 
 ```bash
-flatpak run io.github.exolithelabs.ResumeBuilder
+resuflow
 ```
+
+Arch users can also rebuild from the published source tarball with the checked-in `distro/arch/PKGBUILD`. The package installs a `resuflow-cli` symlink with the same CLI commands, plus the desktop entry, icons, and licenses. `distro/linux/build-arch-package.sh` performs that build end to end (vendored dependency caches, pinned checksums, `makepkg`) and is the path CI runs.
 
 ## Command line
 
 The application provides the same commands on Windows and Linux:
 
 ```text
-resume-builder [dir]               Open the desktop application
-resume-builder --browser [dir]     Open the localhost UI in a browser
-resume-builder serve [dir]         Start the localhost server only
-resume-builder init [dir]          Create a resume workspace
-resume-builder build [dir]         Generate PDFs for every resume
-resume-builder --help              Show command help
+resuflow [dir]               Open the desktop application
+resuflow --browser [dir]     Open the localhost UI in a browser
+resuflow serve [dir]         Start the localhost server only
+resuflow init [dir]          Create a resume workspace
+resuflow build [dir]         Generate PDFs for every resume
+resuflow --help              Show command help
 ```
 
-On Linux, pass command-line arguments to the Flatpak. For example:
+On Arch Linux, pass command-line arguments to either entry point. For example:
 
 ```bash
-flatpak run io.github.exolithelabs.ResumeBuilder --browser ~/Documents/my-resumes
+resuflow --browser ~/Documents/my-resumes
+resuflow-cli --browser ~/Documents/my-resumes
 ```
 
 Examples:
 
 ```bash
-resume-builder init ~/Documents/my-resumes
-resume-builder --browser ~/Documents/my-resumes
-resume-builder build ~/Documents/my-resumes
+resuflow init ~/Documents/my-resumes
+resuflow --browser ~/Documents/my-resumes
+resuflow build ~/Documents/my-resumes
 ```
 
 The server uses `http://127.0.0.1:4173/` by default. If that port is occupied, the desktop launcher starts its own verified sidecar on a free localhost port instead of trusting or reusing the existing process.
@@ -168,10 +173,10 @@ Generic MCP configuration:
 ```json
 {
   "mcpServers": {
-    "resume-builder": {
+    "resuflow": {
       "url": "http://127.0.0.1:4173/mcp",
       "headers": {
-        "Authorization": "Bearer <token shown by Resume Builder>"
+        "Authorization": "Bearer <token shown by ResuFlow>"
       }
     }
   }
@@ -201,8 +206,8 @@ Install dependencies and start the browser development workflow:
 
 ```bash
 npm ci
-node bin/resume-builder.mjs init ../my-resumes
-node bin/resume-builder.mjs --browser --dir ../my-resumes
+node bin/resuflow.mjs init ../my-resumes
+node bin/resuflow.mjs --browser --dir ../my-resumes
 ```
 
 Run the desktop development shell:
@@ -235,13 +240,20 @@ If both secrets are absent, the workflow publishes the unsigned tagged installer
 
 ### Linux releases
 
-After a tagged build succeeds, the workflow automatically sends the exact release commit and version to `exolithelabs/exolithelabs-flatpak-repo`. That repository verifies the tag, updates its pinned Resume Builder manifest, builds and signs both Linux architectures, and deploys the updated OSTree repository to GitHub Pages.
+The [desktop downloads workflow](.github/workflows/desktop.yml) builds the Arch Linux `resuflow` pacman package on every `v*` tag (and on manual runs). Tagged builds publish the `.pkg.tar.zst` plus its `.sha256` checksum, the source tarball and vendored npm/Cargo caches that feed `distro/arch/PKGBUILD`, and a GitHub build-provenance attestation covering all of them. The `verify-linux` job installs the package into a fresh `archlinux:base` container, runs the desktop entry, CLI, and bundled Node sidecar end to end, and blocks publication if any of it fails.
 
-Configure `FLATPAK_REPOSITORY_TOKEN` as a Resume Builder repository secret. It must be a fine-grained token limited to `exolithelabs/exolithelabs-flatpak-repo` with **Contents: read and write** permission so it can create the cross-repository dispatch event. Flatpak signing remains isolated in the Flatpak repository's `FLATPAK_GPG_PRIVATE_KEY` secret.
+Rebuild the exact release sources yourself with the checked-in PKGBUILD:
+
+```bash
+cd distro/arch
+makepkg -s
+```
+
+Pacman treats x86_64 and aarch64 as separate packages; the release filename carries the architecture (`resuflow-<version>-1-x86_64.pkg.tar.zst`).
 
 ### Version management
 
-The release version is synchronized across npm, Tauri, Cargo, and their lockfiles:
+The release version is synchronized across npm, Tauri, Cargo, their lockfiles, and the Arch packaging metadata (`PKGBUILD` plus `.SRCINFO`):
 
 ```bash
 npm run version:set -- 0.2.0
@@ -254,10 +266,10 @@ GitHub Actions rejects a version tag that does not match the packaged version.
 ### Updating
 
 - **Windows:** download and run the newer installer over the existing installation.
-- **Linux:** update the Flatpak through your software manager, or run:
+- **Linux (Arch):** download the newer `resuflow-linux-<arch>.pkg.tar.zst` and install it over the existing package:
 
 ```bash
-flatpak update io.github.exolithelabs.ResumeBuilder
+sudo pacman -U resuflow-linux-x86_64.pkg.tar.zst
 ```
 
 The app checks GitHub's latest public release in the background and displays a dismissible notification when a newer semantic version is available. Users can also run a fresh check from **Settings > Check for updates**. This uses GitHub's public API without credentials, is cached, and never blocks offline work. Automatic download and installation through the Tauri updater are not enabled yet; that requires a final HTTPS update-manifest URL and a separate updater-signing key pair.
@@ -266,23 +278,23 @@ The app checks GitHub's latest public release in the background and displays a d
 
 ### Windows
 
-Use **Windows Settings > Apps > Resume Builder > Uninstall**.
+Use **Windows Settings > Apps > ResuFlow > Uninstall**.
 
-### Linux
+### Linux (Arch)
 
 ```bash
-flatpak uninstall io.github.exolithelabs.ResumeBuilder
+sudo pacman -Rns resuflow
 ```
 
 Both uninstall paths preserve every resume workspace.
 
 ## Project status
 
-Resume Builder is preparing for its initial open-source release. Review the issue tracker and release notes before relying on pre-release builds for critical data.
+ResuFlow is preparing for its initial open-source release. Review the issue tracker and release notes before relying on pre-release builds for critical data.
 
 ## Frequently asked questions
 
-### Does Resume Builder upload my resumes?
+### Does ResuFlow upload my resumes?
 
 No. The application itself reads and writes the selected local workspace. An external AI agent may transmit content according to that provider's behavior and privacy policy.
 
@@ -300,15 +312,15 @@ No. Application files and workspace data are deliberately stored separately.
 
 ### Where are Linux packages?
 
-Linux users can install the signed Flatpak from the [Exolithe Labs Flatpak repository](https://flatpak.exolithelabs.com/apps/io.github.exolithelabs.ResumeBuilder.flatpakref). Flatpak is the only supported Linux distribution format.
+Linux users can install the Arch pacman package from the latest [GitHub release](https://github.com/exolithelabs/resuflow/releases/latest). Pacman is the only supported Linux distribution format.
 
 ## Contributing
 
-External pull requests are not accepted and will be closed. Submit bug reports and focused suggestions through the structured [GitHub issue forms](https://github.com/exolithelabs/resume-builder/issues/new/choose); see [CONTRIBUTING.md](CONTRIBUTING.md). Report security vulnerabilities privately according to [SECURITY.md](SECURITY.md), without attaching real resume data.
+External pull requests are not accepted and will be closed. Submit bug reports and focused suggestions through the structured [GitHub issue forms](https://github.com/exolithelabs/resuflow/issues/new/choose); see [CONTRIBUTING.md](CONTRIBUTING.md). Report security vulnerabilities privately according to [SECURITY.md](SECURITY.md), without attaching real resume data.
 
 ## License
 
-Resume Builder is open-source software available under the [Apache License 2.0](LICENSE). Third-party dependencies retain their own licenses; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+ResuFlow is open-source software available under the [Apache License 2.0](LICENSE). Third-party dependencies retain their own licenses; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ---
 

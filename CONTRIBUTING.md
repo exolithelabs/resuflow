@@ -1,8 +1,8 @@
-# Contributing to Resume Builder
+# Contributing to ResuFlow
 
-Resume Builder is maintained as a personal open-source project. External code contributions are not currently accepted. Please do not open pull requests; they will be closed without review.
+ResuFlow is maintained as a personal open-source project. External code contributions are not currently accepted. Please do not open pull requests; they will be closed without review.
 
-Bug reports and focused suggestions are welcome through the repository's [issue forms](https://github.com/exolithelabs/resume-builder/issues/new/choose). Use the appropriate form so reports contain enough context to evaluate. Report security vulnerabilities privately according to [SECURITY.md](SECURITY.md).
+Bug reports and focused suggestions are welcome through the repository's [issue forms](https://github.com/exolithelabs/resuflow/issues/new/choose). Use the appropriate form so reports contain enough context to evaluate. Report security vulnerabilities privately according to [SECURITY.md](SECURITY.md).
 
 ## Project boundaries
 
@@ -25,8 +25,8 @@ cargo test --manifest-path src-tauri/Cargo.toml
 Create test workspaces outside the source checkout:
 
 ```bash
-node bin/resume-builder.mjs init ../resume-builder-test-workspace
-node bin/resume-builder.mjs --browser --dir ../resume-builder-test-workspace
+node bin/resuflow.mjs init ../resuflow-test-workspace
+node bin/resuflow.mjs --browser --dir ../resuflow-test-workspace
 ```
 
 You are welcome to fork the Apache-2.0-licensed project and modify your fork for your own needs. The development instructions above are provided for that purpose.

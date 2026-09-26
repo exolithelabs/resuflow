@@ -9,7 +9,7 @@ import { CURRENT_VERSION } from './releases.mjs';
 
 export function createResumeMcpServer(workspaceRoot) {
   const server = new McpServer({
-    name: 'resume-builder',
+    name: 'resuflow',
     version: CURRENT_VERSION,
   });
 
@@ -109,7 +109,7 @@ export function createResumeMcpServer(workspaceRoot) {
       role: 'user',
       content: {
         type: 'text',
-        text: `Use the resume-builder MCP tools. Read profile, memory, skills, and resume "${slug}". Improve that resume for ${role || 'the target role'} without inventing employers, dates, or metrics.`,
+        text: `Use the resuflow MCP tools. Read profile, memory, skills, and resume "${slug}". Improve that resume for ${role || 'the target role'} without inventing employers, dates, or metrics.`,
       },
     }],
   }));
@@ -137,7 +137,7 @@ export function mcpSnippet(url, token) {
     url,
     grok: {
       mcpServers: {
-        'resume-builder': {
+        'resuflow': {
           type: 'http',
           url,
           headers,
@@ -146,7 +146,7 @@ export function mcpSnippet(url, token) {
     },
     cursor: {
       mcpServers: {
-        'resume-builder': {
+        'resuflow': {
           url,
           headers,
         },
@@ -154,7 +154,7 @@ export function mcpSnippet(url, token) {
     },
     generic: {
       mcpServers: {
-        'resume-builder': {
+        'resuflow': {
           url,
           headers,
         },

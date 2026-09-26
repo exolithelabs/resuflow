@@ -1,0 +1,78 @@
+# Maintainer: Dhiraj Yadav
+# ResuFlow Arch Linux package.
+#
+# Distribution model: tagged releases publish a source tarball plus vendored
+# npm and Cargo caches as GitHub Release assets. Those archives feed `source=`
+# below, so build() and package() stay fully offline and every builder produces
+# byte-identical output for the same tag. Per-package GPG signatures are not
+# used; verify the published .sha256 sidecars and the GitHub build-provenance
+# attestation on the release instead.
+pkgname=resuflow
+pkgver=0.1.1
+pkgrel=1
+pkgdesc='Build tailored, ATS-friendly resumes in a local workspace.'
+arch=('x86_64' 'aarch64')
+url='https://github.com/exolithelabs/resuflow'
+license=('Apache-2.0')
+depends=('cairo' 'desktop-file-utils' 'gdk-pixbuf2' 'glib2' 'gtk3' 'hicolor-icon-theme' 'libsoup3' 'pango' 'webkit2gtk-4.1' 'xdg-utils')
+makedepends=('cargo' 'librsvg' 'nodejs' 'npm' 'patchelf')
+optdepends=('chromium: PDF export without the first-run Playwright download')
+options=('!strip')
+source=("resuflow-${pkgver}.tar.gz::https://github.com/exolithelabs/resuflow/releases/download/v${pkgver}/resuflow-${pkgver}.tar.gz"
+        "resuflow-${pkgver}-npm-cache.tar.gz::https://github.com/exolithelabs/resuflow/releases/download/v${pkgver}/resuflow-${pkgver}-npm-cache.tar.gz"
+        "resuflow-${pkgver}-cargo-cache.tar.gz::https://github.com/exolithelabs/resuflow/releases/download/v${pkgver}/resuflow-${pkgver}-cargo-cache.tar.gz")
+# Release tarballs are verified through their published .sha256 sidecars and
+# the release-wide build-provenance attestation instead of pinned sums here.
+# distro/linux/build-arch-package.sh replaces these SKIP entries with the real
+# digests of the tarballs it just created, so makepkg still verifies every
+# input it compiles.
+sha256sums=('SKIP'
+            'SKIP'
+            'SKIP')
+
+prepare() {
+  # Unpack the vendored dependency caches where build() expects them.
+  rm -rf "${srcdir}/vendor"
+  mkdir -p "${srcdir}/vendor"
+  tar -xzf "${srcdir}/resuflow-${pkgver}-npm-cache.tar.gz" -C "${srcdir}/vendor"
+  tar -xzf "${srcdir}/resuflow-${pkgver}-cargo-cache.tar.gz" -C "${srcdir}/vendor"
+}
+
+build() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+
+  export CARGO_HOME="${srcdir}/vendor/cargo-home"
+  export CARGO_NET_OFFLINE=true
+  export NPM_CONFIG_CACHE="${srcdir}/vendor/npm-cache"
+  export NPM_CONFIG_OFFLINE=true
+
+  # Stage the Node sidecar (app sources plus a bundled Node runtime) and then
+  # compile the Tauri desktop shell against it.
+  npm run desktop:prepare
+  cargo build --release --locked --offline --manifest-path src-tauri/Cargo.toml
+}
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+
+  # Desktop binary and the CLI-compatible alias. /usr/bin is already on PATH,
+  # so no profile scripts or post-install hooks are needed.
+  install -Dm755 "src-tauri/target/release/${pkgname}" "${pkgdir}/usr/bin/${pkgname}"
+  ln -s "${pkgname}" "${pkgdir}/usr/bin/${pkgname}-cli"
+
+  # Tauri resolves its resource directory to /usr/lib/<exe> on Linux, so the
+  # staged sidecar lands exactly where the shell looks for it.
+  install -dm755 "${pkgdir}/usr/lib/${pkgname}"
+  cp -a src-tauri/resources/app "${pkgdir}/usr/lib/${pkgname}/app"
+  cp -a src-tauri/resources/runtime "${pkgdir}/usr/lib/${pkgname}/runtime"
+
+  install -Dm644 distro/linux/resuflow.desktop "${pkgdir}/usr/share/applications/resuflow.desktop"
+  install -Dm644 distro/linux/io.github.exolithelabs.ResuFlow.metainfo.xml "${pkgdir}/usr/share/metainfo/io.github.exolithelabs.ResuFlow.metainfo.xml"
+  install -Dm644 src-tauri/icons/32x32.png "${pkgdir}/usr/share/icons/hicolor/32x32/apps/resuflow.png"
+  install -Dm644 src-tauri/icons/128x128.png "${pkgdir}/usr/share/icons/hicolor/128x128/apps/resuflow.png"
+  install -Dm644 src-tauri/icons/icon.png "${pkgdir}/usr/share/icons/hicolor/512x512/apps/resuflow.png"
+
+  install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  install -Dm644 NOTICE "${pkgdir}/usr/share/licenses/${pkgname}/NOTICE"
+  install -Dm644 THIRD-PARTY-NOTICES.md "${pkgdir}/usr/share/licenses/${pkgname}/THIRD-PARTY-NOTICES.md"
+}

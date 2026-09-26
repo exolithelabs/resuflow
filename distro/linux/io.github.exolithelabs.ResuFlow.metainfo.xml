@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.exolithelabs.ResuFlow</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <name>ResuFlow</name>
+  <summary>Build tailored, ATS-friendly resumes in a local workspace.</summary>
+  <description>
+    <p>ResuFlow is a local-first desktop app for role-specific resumes: Markdown editing, print-ready previews, PDF export, and an MCP endpoint for the AI agent you choose. Profile and resume data stay in a user-controlled workspace outside the application.</p>
+  </description>
+  <launchable type="desktop-id">resuflow.desktop</launchable>
+  <url type="homepage">https://github.com/exolithelabs/resuflow</url>
+  <url type="bugtracker">https://github.com/exolithelabs/resuflow/issues</url>
+  <developer id="io.github.exolithelabs">
+    <name>Exolithe Labs</name>
+  </developer>
+  <releases>
+    <release version="0.1.1" date="2026-09-26"/>
+  </releases>
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-info">mild</content_attribute>
+  </content_rating>
+  <categories>
+    <category>Office</category>
+  </categories>  <icon type="cached" width="32" height="32">resuflow.png</icon>
+  <icon type="cached" width="128" height="128">resuflow.png</icon>
+  <icon type="cached" width="512" height="512">resuflow.png</icon>
+  <provides>
+    <binary>resuflow</binary>
+  </provides>
+</component>

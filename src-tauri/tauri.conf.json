@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Resume Builder",
+  "productName": "ResuFlow",
   "version": "0.1.1",
-  "identifier": "io.github.exolithelabs.ResumeBuilder",
+  "identifier": "io.github.exolithelabs.ResuFlow",
   "build": {
     "frontendDist": "splash"
   },

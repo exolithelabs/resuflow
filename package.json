@@ -1,11 +1,11 @@
 {
-  "name": "resume-builder",
+  "name": "resuflow",
   "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Downloadable local resume builder with desktop, browser, CLI, and MCP access.",
   "license": "Apache-2.0",
-  "author": "Resume Builder contributors",
+  "author": "ResuFlow contributors",
   "keywords": [
     "resume",
     "cv",
@@ -15,14 +15,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/exolithelabs/resume-builder.git"
+    "url": "git+https://github.com/exolithelabs/resuflow.git"
   },
-  "homepage": "https://github.com/exolithelabs/resume-builder#readme",
+  "homepage": "https://github.com/exolithelabs/resuflow#readme",
   "bugs": {
-    "url": "https://github.com/exolithelabs/resume-builder/issues"
+    "url": "https://github.com/exolithelabs/resuflow/issues"
   },
   "bin": {
-    "resume-builder": "./bin/resume-builder.mjs"
+    "resuflow": "./bin/resuflow.mjs"
   },
   "files": [
     "bin",
@@ -39,16 +39,18 @@
   ],
   "scripts": {
     "test": "node --test",
-    "start": "node bin/resume-builder.mjs",
-    "serve": "node bin/resume-builder.mjs serve --browser",
-    "desktop": "node bin/resume-builder.mjs desktop",
+    "start": "node bin/resuflow.mjs",
+    "serve": "node bin/resuflow.mjs serve --browser",
+    "desktop": "node bin/resuflow.mjs desktop",
     "desktop:prepare": "node scripts/prepare-desktop-sidecar.mjs",
     "tauri": "tauri",
     "desktop:dev": "npm run desktop:prepare && tauri dev",
     "desktop:build": "npm run desktop:prepare && tauri build",
     "version:check": "node scripts/version.mjs --check",
     "version:set": "node scripts/version.mjs --set",
-    "resume-builder": "node bin/resume-builder.mjs"
+    "distro:check": "node scripts/distro-check.mjs",
+    "distro:build": "bash distro/linux/build-arch-package.sh",
+    "resuflow": "node bin/resuflow.mjs"
   },
   "engines": {
     "node": ">=20"

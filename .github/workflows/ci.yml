@@ -31,15 +31,17 @@ jobs:
 
       - run: npm test
 
+      - run: npm run distro:check
+
       - name: CLI help
-        run: node bin/resume-builder.mjs --help
+        run: node bin/resuflow.mjs --help
 
       - name: Init workspace and start server
         shell: bash
         run: |
           workdir="${RUNNER_TEMP}/resume-workspace"
-          node bin/resume-builder.mjs init "$workdir"
-          node bin/resume-builder.mjs serve --dir "$workdir" --port 4173 --no-open &
+          node bin/resuflow.mjs init "$workdir"
+          node bin/resuflow.mjs serve --dir "$workdir" --port 4173 --no-open &
           for i in $(seq 1 30); do
             if curl -fsS "http://127.0.0.1:4173/api/health" >/dev/null; then
               curl -fsS "http://127.0.0.1:4173/api/health"

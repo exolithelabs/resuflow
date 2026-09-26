@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability
-    url: https://github.com/exolithelabs/resume-builder/security/advisories/new
+    url: https://github.com/exolithelabs/resuflow/security/advisories/new
     about: Report vulnerabilities privately. Do not include real resume or profile data.

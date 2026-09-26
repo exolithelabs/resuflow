@@ -3,20 +3,30 @@ import path from 'node:path';
 import { mkdir, readFile, access } from 'node:fs/promises';
 import { atomicWriteFile } from './atomic-write.mjs';
 
+const CONFIG_DIR = '.resuflow';
+const LEGACY_CONFIG_DIR = '.resume-builder';
+
 export function userConfigPath() {
-  return path.join(homedir(), '.resume-builder', 'config.json');
+  return path.join(homedir(), CONFIG_DIR, 'config.json');
+}
+
+export function legacyUserConfigPath() {
+  return path.join(homedir(), LEGACY_CONFIG_DIR, 'config.json');
 }
 
 export async function loadUserConfig() {
-  try {
-    const payload = JSON.parse(await readFile(userConfigPath(), 'utf8'));
-    return {
-      defaultVault: String(payload.defaultVault || ''),
-      recentVaults: Array.isArray(payload.recentVaults) ? payload.recentVaults.map(String) : [],
-    };
-  } catch {
-    return { defaultVault: '', recentVaults: [] };
+  for (const file of [userConfigPath(), legacyUserConfigPath()]) {
+    try {
+      const payload = JSON.parse(await readFile(file, 'utf8'));
+      return {
+        defaultVault: String(payload.defaultVault || ''),
+        recentVaults: Array.isArray(payload.recentVaults) ? payload.recentVaults.map(String) : [],
+      };
+    } catch {
+      // Optional file: fall through to the legacy location, then to the defaults.
+    }
   }
+  return { defaultVault: '', recentVaults: [] };
 }
 
 export async function saveUserConfig(input) {

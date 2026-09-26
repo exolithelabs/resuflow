@@ -65,15 +65,15 @@ export function startServer({
   apiToken: suppliedApiToken,
   launchToken: suppliedLaunchToken,
 }) {
-  const configuredToken = suppliedApiToken || process.env.RESUME_BUILDER_API_TOKEN || '';
+  const configuredToken = suppliedApiToken || process.env.RESUFLOW_API_TOKEN || '';
   if (configuredToken && !/^[A-Za-z0-9_-]{32,128}$/.test(configuredToken)) {
-    throw new WorkspaceError('RESUME_BUILDER_API_TOKEN must be a 32-128 character URL-safe token.');
+    throw new WorkspaceError('RESUFLOW_API_TOKEN must be a 32-128 character URL-safe token.');
   }
   const apiToken = configuredToken || randomBytes(32).toString('base64url');
   const browserSessionId = randomBytes(32).toString('base64url');
   const state = {
     workspaceRoot,
-    launchToken: suppliedLaunchToken || process.env.RESUME_BUILDER_LAUNCH_TOKEN || '',
+    launchToken: suppliedLaunchToken || process.env.RESUFLOW_LAUNCH_TOKEN || '',
     apiToken,
     browserSessionId,
   };
@@ -117,7 +117,7 @@ async function handle(req, res, state, port) {
   if (pathname === '/api/health' && method === 'GET') {
     return sendJson(res, {
       ok: true,
-      app: 'resume-builder',
+      app: 'resuflow',
       launchToken: state.launchToken,
     });
   }
@@ -202,7 +202,7 @@ async function handle(req, res, state, port) {
     res.writeHead(204, {
       ...SECURITY_HEADERS,
       ...(origin ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {}),
-      'Access-Control-Allow-Headers': 'authorization, content-type, mcp-session-id, mcp-protocol-version, x-resume-builder-token',
+      'Access-Control-Allow-Headers': 'authorization, content-type, mcp-session-id, mcp-protocol-version, x-resuflow-token',
       'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     });
     res.end();
@@ -354,9 +354,9 @@ async function sendIndex(req, res, requestUrl, apiToken, browserSessionId) {
     return;
   }
 
-  if (!tokensMatch(readCookie(req, 'rb_session'), browserSessionId)) {
+  if (!tokensMatch(readCookie(req, 'rf_session'), browserSessionId)) {
     res.writeHead(401, { ...SECURITY_HEADERS, 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('Resume Builder must be opened from the desktop app or CLI launch URL.');
+    res.end('ResuFlow must be opened from the desktop app or CLI launch URL.');
     return;
   }
 
@@ -458,7 +458,7 @@ function assertTrustedOrigin(req, port) {
 }
 
 function requestSlug(req, kind) {
-  const slug = String(req.headers['x-resume-builder-slug'] || '');
+  const slug = String(req.headers['x-resuflow-slug'] || '');
   assertSlug(slug, kind);
   return slug;
 }
@@ -470,10 +470,10 @@ function authorizeRequest(req, apiToken, {
 } = {}) {
   const authorization = String(req.headers.authorization || '');
   const bearer = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
-  const headerToken = String(req.headers['x-resume-builder-token'] || bearer);
+  const headerToken = String(req.headers['x-resuflow-token'] || bearer);
   if (tokensMatch(headerToken, apiToken)) return;
-  if (allowCookie && tokensMatch(readCookie(req, 'rb_session'), browserSessionId)) {
-    if (requireBrowserHeader && req.headers['x-resume-builder-request'] !== '1') {
+  if (allowCookie && tokensMatch(readCookie(req, 'rf_session'), browserSessionId)) {
+    if (requireBrowserHeader && req.headers['x-resuflow-request'] !== '1') {
       throw new WorkspaceError('Browser request header required.', 403);
     }
     return;
@@ -499,5 +499,5 @@ function readCookie(req, name) {
 }
 
 function sessionCookie(browserSessionId) {
-  return `rb_session=${browserSessionId}; HttpOnly; SameSite=Strict; Path=/`;
+  return `rf_session=${browserSessionId}; HttpOnly; SameSite=Strict; Path=/`;
 }

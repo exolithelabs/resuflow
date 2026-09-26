@@ -6,7 +6,7 @@ Please do not open a public issue for an unpatched vulnerability or include priv
 
 Use GitHub private vulnerability reporting:
 
-https://github.com/exolithelabs/resume-builder/security/advisories/new
+https://github.com/exolithelabs/resuflow/security/advisories/new
 
 Include the affected version, operating system, reproduction steps, and expected impact. Use synthetic test data only.
 

@@ -1,13 +1,13 @@
 [package]
-name = "resume-builder"
+name = "resuflow"
 version = "0.1.1"
-description = "Resume Builder desktop shell"
+description = "ResuFlow desktop shell"
 license = "Apache-2.0"
-authors = ["Resume Builder"]
+authors = ["ResuFlow"]
 edition = "2021"
 
 [lib]
-name = "resume_builder_lib"
+name = "resuflow_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

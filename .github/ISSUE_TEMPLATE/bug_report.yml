@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible problem with Resume Builder.
+description: Report a reproducible problem with ResuFlow.
 title: "[Bug]: "
 labels:
   - bug
@@ -24,7 +24,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Resume Builder version
+      label: ResuFlow version
       description: Enter the installed version or Git commit.
       placeholder: 0.1.0
     validations:

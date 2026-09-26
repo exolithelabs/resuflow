@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-const REPOSITORY = 'exolithelabs/resume-builder';
+const REPOSITORY = 'exolithelabs/resuflow';
 const RELEASES_API = `https://api.github.com/repos/${REPOSITORY}/releases/latest`;
 const RELEASE_URL_PREFIX = `https://github.com/${REPOSITORY}/releases/tag/`;
 const CACHE_MS = 60 * 60 * 1000;
@@ -20,7 +20,7 @@ export async function checkLatestRelease({
   const response = await fetchImpl(RELEASES_API, {
     headers: {
       Accept: 'application/vnd.github+json',
-      'User-Agent': 'resume-builder',
+      'User-Agent': 'resuflow',
       'X-GitHub-Api-Version': '2026-03-10',
     },
     signal: AbortSignal.timeout(5000),

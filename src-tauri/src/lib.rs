@@ -21,7 +21,7 @@ pub fn run() {
                 return Ok(());
             }
 
-            let preferred_port = std::env::var("RESUME_BUILDER_PORT")
+            let preferred_port = std::env::var("RESUFLOW_PORT")
                 .ok()
                 .and_then(|value| value.parse::<u16>().ok())
                 .unwrap_or(4173);
@@ -34,13 +34,13 @@ pub fn run() {
             if !wait_for_sidecar(&port, &launch_token, &mut sidecar, Duration::from_secs(20)) {
                 let _ = sidecar.kill();
                 let _ = sidecar.wait();
-                return Err("Resume Builder could not verify its Node sidecar".into());
+                return Err("ResuFlow could not verify its Node sidecar".into());
             }
             app.manage(SidecarState(Mutex::new(Some(sidecar))));
 
             let mut builder =
                 WebviewWindowBuilder::new(app.handle(), "main", WebviewUrl::External(url.parse()?))
-                    .title("Resume Builder")
+                    .title("ResuFlow")
                     .inner_size(1320.0, 900.0)
                     .min_inner_size(800.0, 600.0)
                     .resizable(true)
@@ -55,7 +55,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("failed to start Resume Builder")
+        .expect("failed to start ResuFlow")
         .run(|app, event| {
             if let RunEvent::Exit = event {
                 if let Some(state) = app.try_state::<SidecarState>() {
@@ -78,8 +78,8 @@ fn run_node_cli(
     let status = Command::new(node)
         .arg(cli)
         .args(args)
-        .env("RESUME_BUILDER_DESKTOP", std::env::current_exe()?)
-        .env("RESUME_BUILDER_PACKAGED", "1")
+        .env("RESUFLOW_DESKTOP", std::env::current_exe()?)
+        .env("RESUFLOW_PACKAGED", "1")
         .status()?;
     Ok(status.code().unwrap_or(1))
 }
@@ -91,14 +91,14 @@ fn spawn_node_sidecar(
     api_token: &str,
 ) -> Result<Child, Box<dyn std::error::Error>> {
     let (node, cli) = sidecar_paths(app)?;
-    let workspace = std::env::var("RESUME_BUILDER_WORKSPACE").ok();
+    let workspace = std::env::var("RESUFLOW_WORKSPACE").ok();
 
     let mut command = Command::new(node);
     command
         .arg(cli)
         .args(["serve", "--sidecar", "--port", port])
-        .env("RESUME_BUILDER_LAUNCH_TOKEN", launch_token)
-        .env("RESUME_BUILDER_API_TOKEN", api_token)
+        .env("RESUFLOW_LAUNCH_TOKEN", launch_token)
+        .env("RESUFLOW_API_TOKEN", api_token)
         .stdin(Stdio::null())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
@@ -117,8 +117,8 @@ fn spawn_node_sidecar(
 }
 
 fn sidecar_paths(app: &tauri::AppHandle) -> Result<(PathBuf, PathBuf), Box<dyn std::error::Error>> {
-    if let Ok(cli) = std::env::var("RESUME_BUILDER_CLI") {
-        let node = std::env::var("RESUME_BUILDER_NODE").unwrap_or_else(|_| "node".into());
+    if let Ok(cli) = std::env::var("RESUFLOW_CLI") {
+        let node = std::env::var("RESUFLOW_NODE").unwrap_or_else(|_| "node".into());
         return Ok((PathBuf::from(node), PathBuf::from(cli)));
     }
 
@@ -126,13 +126,13 @@ fn sidecar_paths(app: &tauri::AppHandle) -> Result<(PathBuf, PathBuf), Box<dyn s
     let node_name = if cfg!(windows) { "node.exe" } else { "node" };
     for root in [resource_dir.clone(), resource_dir.join("resources")] {
         let node = root.join("runtime").join(node_name);
-        let cli = root.join("app").join("bin").join("resume-builder.mjs");
+        let cli = root.join("app").join("bin").join("resuflow.mjs");
         if node.is_file() && cli.is_file() {
             return Ok((command_path(node), command_path(cli)));
         }
     }
 
-    Err("Bundled Node sidecar is missing. Download and reinstall the latest Resume Builder package.".into())
+    Err("Bundled Node sidecar is missing. Download and reinstall the latest ResuFlow package.".into())
 }
 
 fn command_path(path: PathBuf) -> PathBuf {
@@ -197,7 +197,7 @@ fn sidecar_health_matches(port: &str, launch_token: &str) -> bool {
     let Ok(payload) = serde_json::from_str::<serde_json::Value>(body) else {
         return false;
     };
-    payload.get("app").and_then(|value| value.as_str()) == Some("resume-builder")
+    payload.get("app").and_then(|value| value.as_str()) == Some("resuflow")
         && payload.get("launchToken").and_then(|value| value.as_str()) == Some(launch_token)
 }
 
@@ -218,11 +218,11 @@ mod tests {
 
     #[test]
     fn health_check_requires_the_expected_app_and_launch_token() {
-        let valid_port = serve_health(r#"{"app":"resume-builder","launchToken":"expected"}"#);
+        let valid_port = serve_health(r#"{"app":"resuflow","launchToken":"expected"}"#);
         assert!(sidecar_health_matches(&valid_port.to_string(), "expected"));
 
         let wrong_token_port =
-            serve_health(r#"{"app":"resume-builder","launchToken":"unexpected"}"#);
+            serve_health(r#"{"app":"resuflow","launchToken":"unexpected"}"#);
         assert!(!sidecar_health_matches(
             &wrong_token_port.to_string(),
             "expected"

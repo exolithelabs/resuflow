@@ -34,7 +34,7 @@ async function requestStatus(url, headers) {
 }
 
 async function fixture() {
-  const root = await mkdtemp(path.join(tmpdir(), 'resume-builder-security-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'resuflow-security-'));
   await initWorkspace(root);
   const port = await availablePort();
   const started = await startServer({
@@ -60,7 +60,7 @@ test('localhost API requires a token and rejects cross-origin mutation', async (
 
     const untrustedHost = await requestStatus(`${app.url}api/resumes`, {
         Host: 'attacker.example',
-        'X-Resume-Builder-Token': app.apiToken,
+        'X-ResuFlow-Token': app.apiToken,
     });
     assert.equal(untrustedHost, 403);
 
@@ -74,7 +74,7 @@ test('localhost API requires a token and rejects cross-origin mutation', async (
       headers: {
         'Content-Type': 'text/plain',
         Origin: 'https://attacker.example',
-        'X-Resume-Builder-Token': app.apiToken,
+        'X-ResuFlow-Token': app.apiToken,
       },
       body: JSON.stringify({ title: 'Blocked request' }),
     });
@@ -98,7 +98,7 @@ test('localhost API requires a token and rejects cross-origin mutation', async (
     assert.equal(crossOriginMcp.status, 403);
 
     const resumes = await fetch(`${app.url}api/resumes`, {
-      headers: { 'X-Resume-Builder-Token': app.apiToken },
+      headers: { 'X-ResuFlow-Token': app.apiToken },
     });
     assert.equal(resumes.status, 200);
     assert.deepEqual((await resumes.json()).resumes, []);
@@ -114,7 +114,7 @@ test('browser bootstrap exchanges its token for a strict session cookie', async 
     assert.equal(bootstrap.status, 302);
     assert.equal(bootstrap.headers.get('location'), '/');
     const cookie = bootstrap.headers.get('set-cookie');
-    assert.match(cookie, /rb_session=/);
+    assert.match(cookie, /rf_session=/);
     assert.doesNotMatch(cookie, new RegExp(app.apiToken));
     assert.match(cookie, /HttpOnly/i);
     assert.match(cookie, /SameSite=Strict/i);
@@ -143,7 +143,7 @@ test('browser bootstrap exchanges its token for a strict session cookie', async 
       headers: {
         Cookie: cookie.split(';', 1)[0],
         'Content-Type': 'application/json',
-        'X-Resume-Builder-Request': '1',
+        'X-ResuFlow-Request': '1',
       },
       body: JSON.stringify({ title: 'Browser request' }),
     });
@@ -152,7 +152,7 @@ test('browser bootstrap exchanges its token for a strict session cookie', async 
     const fixedResumeRoute = await fetch(`${app.url}api/resume`, {
       headers: {
         Cookie: cookie.split(';', 1)[0],
-        'X-Resume-Builder-Slug': 'browser-request',
+        'X-ResuFlow-Slug': 'browser-request',
       },
     });
     assert.equal(fixedResumeRoute.status, 200);
@@ -175,7 +175,7 @@ test('JSON endpoints reject the wrong content type and oversized bodies', async 
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain',
-        'X-Resume-Builder-Token': app.apiToken,
+        'X-ResuFlow-Token': app.apiToken,
       },
       body: JSON.stringify({ title: 'No' }),
     });
@@ -185,7 +185,7 @@ test('JSON endpoints reject the wrong content type and oversized bodies', async 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Resume-Builder-Token': app.apiToken,
+        'X-ResuFlow-Token': app.apiToken,
       },
       body: JSON.stringify({ title: 'x'.repeat(1024 * 1024) }),
     });
@@ -202,7 +202,7 @@ test('encoded traversal cannot escape static or skill directories', async () => 
     assert.equal(staticTraversal.status, 403);
 
     const skillTraversal = await fetch(`${app.url}api/skills/..%5Caudit-target`, {
-      headers: { 'X-Resume-Builder-Token': app.apiToken },
+      headers: { 'X-ResuFlow-Token': app.apiToken },
     });
     assert.equal(skillTraversal.status, 400);
 
@@ -227,22 +227,36 @@ test('resume rendering removes scripts, event handlers, and unsafe URLs', () => 
 });
 
 test('workspace markers migrate safely and reject future schemas', async () => {
-  const root = await mkdtemp(path.join(tmpdir(), 'resume-builder-migration-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'resuflow-migration-'));
   try {
-    await writeFile(path.join(root, 'resume-builder.json'), '{}', 'utf8');
+    await writeFile(path.join(root, 'resuflow.json'), '{}', 'utf8');
     const migrated = await findWorkspace(root);
     assert.equal(migrated.marker.schemaVersion, 1);
-    assert.equal(JSON.parse(await readFile(path.join(root, 'resume-builder.json'), 'utf8')).schemaVersion, 1);
+    assert.equal(JSON.parse(await readFile(path.join(root, 'resuflow.json'), 'utf8')).schemaVersion, 1);
 
-    await writeFile(path.join(root, 'resume-builder.json'), '{"schemaVersion":999}', 'utf8');
+    await writeFile(path.join(root, 'resuflow.json'), '{"schemaVersion":999}', 'utf8');
     await assert.rejects(() => findWorkspace(root), /supports up to 1/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
+test('legacy Resume Builder markers migrate to the ResuFlow marker', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'resuflow-legacy-marker-'));
+  try {
+    await writeFile(path.join(root, 'resume-builder.json'), '{"schemaVersion":1}', 'utf8');
+
+    const workspace = await findWorkspace(root);
+    assert.equal(workspace.marker.schemaVersion, 1);
+    assert.equal(await readFile(path.join(root, 'resume-builder.json'), 'utf8').catch(() => ''), '');
+    assert.equal(JSON.parse(await readFile(path.join(root, 'resuflow.json'), 'utf8')).schemaVersion, 1);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('concurrent profile writes leave a complete valid file', async () => {
-  const root = await mkdtemp(path.join(tmpdir(), 'resume-builder-atomic-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'resuflow-atomic-'));
   try {
     await initWorkspace(root);
     await Promise.all(Array.from({ length: 20 }, (_, index) => saveProfile(root, {

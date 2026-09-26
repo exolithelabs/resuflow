@@ -6,7 +6,7 @@ ${StrStr}
 ${StrRep}
 ${UnStrRep}
 
-; Make resume-builder.exe available as `resume-builder` in newly opened shells.
+; Make resuflow.exe available as `resuflow` in newly opened shells.
 ; This is a current-user installer, so no administrator privileges are required.
 !macro NSIS_HOOK_POSTINSTALL
   ReadRegStr $0 HKCU "Environment" "Path"

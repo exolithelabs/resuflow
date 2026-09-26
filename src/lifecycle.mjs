@@ -1,26 +1,29 @@
-export const PACKAGE_NAME = 'resume-builder';
-export const DOWNLOAD_URL = process.env.RESUME_BUILDER_DOWNLOAD_URL
-  || 'https://github.com/exolithelabs/resume-builder/releases/latest/download/Resume-Builder-Windows-x64-setup.exe';
-export const FLATPAK_APP_ID = 'io.github.exolithelabs.ResumeBuilder';
-export const FLATPAK_REF_URL = `https://flatpak.exolithelabs.com/apps/${FLATPAK_APP_ID}.flatpakref`;
+export const PACKAGE_NAME = 'resuflow';
+export const DOWNLOAD_URL = process.env.RESUFLOW_DOWNLOAD_URL
+  || 'https://github.com/exolithelabs/resuflow/releases/latest/download/ResuFlow-Windows-x64-setup.exe';
+export const LINUX_PACKAGE_NAME = 'resuflow';
+export const LINUX_ARCH = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
+export const LINUX_PACKAGE_FILE = `${LINUX_PACKAGE_NAME}-linux-${LINUX_ARCH}.pkg.tar.zst`;
+export const LINUX_PACKAGE_URL = process.env.RESUFLOW_PACKAGE_URL
+  || `https://github.com/exolithelabs/resuflow/releases/latest/download/${LINUX_PACKAGE_FILE}`;
 
 export function installApp() {
   console.log(`Windows: download the installer from ${DOWNLOAD_URL}`);
-  console.log(`Linux: install the Flatpak from ${FLATPAK_REF_URL}`);
+  console.log(`Linux (Arch): download ${LINUX_PACKAGE_FILE} and its .sha256 sidecar from the latest release, verify the checksum, then run \`sudo pacman -U ${LINUX_PACKAGE_FILE}\`.`);
   return 0;
 }
 
 export function updateApp() {
-  console.log(`Windows: download and run the latest Resume Builder installer from ${DOWNLOAD_URL}`);
-  console.log(`Linux: run \`flatpak update ${FLATPAK_APP_ID}\` from a terminal.`);
+  console.log(`Windows: download and run the latest ResuFlow installer from ${DOWNLOAD_URL}`);
+  console.log(`Linux (Arch): download the latest ${LINUX_PACKAGE_FILE} from ${LINUX_PACKAGE_URL} and install it with \`sudo pacman -U ${LINUX_PACKAGE_FILE}\`.`);
   return 0;
 }
 
 export function uninstallApp() {
   if (process.platform === 'win32') {
-    console.log('Uninstall Resume Builder from Windows Settings → Apps.');
+    console.log('Uninstall ResuFlow from Windows Settings → Apps.');
   } else {
-    console.log(`Run \`flatpak uninstall ${FLATPAK_APP_ID}\` from a terminal.`);
+    console.log(`Run \`sudo pacman -Rns ${LINUX_PACKAGE_NAME}\` from a terminal.`);
   }
   console.log('Your resume workspaces are not removed with the app.');
   return 0;
