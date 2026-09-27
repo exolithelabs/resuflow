@@ -6,6 +6,7 @@ coverage/
 .wrangler/
 src-tauri/target/
 src-tauri/resources/
+src-tauri/gen/
 src-tauri/tauri.windows-signing.conf.json
 desktop/*.exe
 desktop/*.app
@@ -38,6 +39,9 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Local-only agent state is not intended for version control.
+.pi-todos.json
 
 # Arch packaging build output.
 distro/arch/pkg/
