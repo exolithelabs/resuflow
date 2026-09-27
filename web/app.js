@@ -451,14 +451,15 @@ async function renderDocs() {
 
       <section class="docs-section" id="docs-install">
         <h2>Install and run</h2>
-        <p>Windows users can download the installer from the product website; Node.js and npm are bundled. On Arch Linux, install the pacman package from the latest GitHub release.</p>
+        <p>Windows users can download the installer from the product website; Node.js and npm are bundled. On Arch Linux, install the pacman package straight from its release URL, or download it first and install from the local file — both forms also upgrade an existing install.</p>
         <pre>Windows: download and run the .exe installer
-Linux (Arch): sudo pacman -U resuflow-linux-x86_64.pkg.tar.zst</pre>
+Linux (Arch): sudo pacman -U https://github.com/exolithelabs/resuflow/releases/latest/download/resuflow-linux-x86_64.pkg.tar.zst
+Linux (Arch, local file): cd ~/Downloads && sudo pacman -U ./resuflow-linux-x86_64.pkg.tar.zst</pre>
         <ul>
           <li><code>resuflow</code> opens the desktop window by default.</li>
           <li><code>resuflow --browser</code> opens the same UI in a web browser.</li>
           <li><code>resuflow serve</code> starts the server only.</li>
-          <li>On Windows, download updates from the product website. On Arch Linux, install the newer package with <code>sudo pacman -U</code>.</li>
+          <li>On Windows, download updates from the product website. On Arch Linux, re-run <code>sudo pacman -U</code> with the newer package URL or the locally downloaded package file.</li>
           <li>Removing the app does not remove your workspace.</li>
         </ul>
         <p>The UI is at <code>http://127.0.0.1:4173/</code> while the app is running.</p>

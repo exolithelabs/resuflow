@@ -197,8 +197,9 @@ function printHelp() {
 
 Install:
   Windows: download the installer from the product website.
-  Linux (Arch): download resuflow-linux-<arch>.pkg.tar.zst from the latest
-  GitHub release and install it with pacman.
+  Linux (Arch): sudo pacman -U <release-url.pkg.tar.zst>, or download
+  resuflow-linux-<arch>.pkg.tar.zst and run sudo pacman -U ./*.pkg.tar.zst
+  from that folder. The same command upgrades an existing install.
 
 Usage:
   resuflow [dir]               Run (desktop window by default)

@@ -22,7 +22,12 @@ Do not add personal names, employers, emails, or resume content here.
 ## Commands
 
 ```bash
-# Install the Arch pacman package from the latest GitHub release (`sudo pacman -U resuflow-linux-<arch>.pkg.tar.zst`), or on Windows from the product website.
+# Install the Arch pacman package, or on Windows from the product website.
+# Arch flows (each also upgrades an existing install):
+#   sudo pacman -U <release-url.pkg.tar.zst>                       # direct URL
+#   curl -fsSLO <release-url.pkg.tar.zst>{,.sha256} && sudo pacman -U ./<file>.pkg.tar.zst
+#   # or browser "Save as…" into a folder, then from that folder:
+#   sudo pacman -U ./<file>.pkg.tar.zst                            # local file (full path works too)
 resuflow init [dir]
 resuflow [dir]
 resuflow --browser [dir]
@@ -59,7 +64,8 @@ Do not invent employers, dates, metrics, technologies, credentials, or outcomes.
 - Public Windows installers are currently unsigned, explicitly disclosed as such, and accompanied by a SHA-256 checksum and GitHub provenance attestation
 - Arch Linux is distributed only as the `resuflow` pacman package published on tagged GitHub releases; per-package GPG signatures are not used, so verify the published SHA-256 checksum and release attestation before installing
 - The Arch package installs `/usr/bin/resuflow` plus a `resuflow-cli` alias, desktop entry, icons, and licenses; `/usr/bin` is already on PATH, so no profile scripts or hooks are involved
-- CI builds the Arch package in an `archlinux:base` container, installs it in a clean container, and blocks the release on failure
+- CI builds the Arch package in an `archlinux:base` container, installs it in a clean container via both `pacman -U <url>` and `pacman -U <local file>` (including an upgrade pass), and blocks the release on failure
+- Uninstalling is `sudo pacman -Rns resuflow` on Arch (Windows Settings > Apps on Windows) and never removes resume workspaces
 - `npm run version:set -- <semver>` synchronizes npm, Tauri, Cargo, lockfiles, PKGBUILD, and .SRCINFO; `npm run distro:check` validates the Arch metadata
 - `init` creates a workspace outside this repo
 - First desktop launch creates a default workspace under Documents if none exists

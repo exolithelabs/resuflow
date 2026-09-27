@@ -9,13 +9,13 @@ export const LINUX_PACKAGE_URL = process.env.RESUFLOW_PACKAGE_URL
 
 export function installApp() {
   console.log(`Windows: download the installer from ${DOWNLOAD_URL}`);
-  console.log(`Linux (Arch): download ${LINUX_PACKAGE_FILE} and its .sha256 sidecar from the latest release, verify the checksum, then run \`sudo pacman -U ${LINUX_PACKAGE_FILE}\`.`);
+  console.log(`Linux (Arch): install directly with \`sudo pacman -U ${LINUX_PACKAGE_URL}\`, or download ${LINUX_PACKAGE_FILE} and its .sha256 sidecar, verify the checksum, then run \`sudo pacman -U ./${LINUX_PACKAGE_FILE}\` from that folder.`);
   return 0;
 }
 
 export function updateApp() {
   console.log(`Windows: download and run the latest ResuFlow installer from ${DOWNLOAD_URL}`);
-  console.log(`Linux (Arch): download the latest ${LINUX_PACKAGE_FILE} from ${LINUX_PACKAGE_URL} and install it with \`sudo pacman -U ${LINUX_PACKAGE_FILE}\`.`);
+  console.log(`Linux (Arch): run \`sudo pacman -U ${LINUX_PACKAGE_URL}\` again, or download the newer ${LINUX_PACKAGE_FILE} and install it from that folder with \`sudo pacman -U ./${LINUX_PACKAGE_FILE}\`. Both forms upgrade over the existing package.`);
   return 0;
 }
 

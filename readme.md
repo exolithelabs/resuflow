@@ -111,13 +111,37 @@ Windows releases are currently unsigned and can display a Microsoft Defender Sma
 
 [Download the SHA-256 checksum](https://github.com/exolithelabs/resuflow/releases/latest/download/resuflow-linux-x86_64.pkg.tar.zst.sha256)
 
-Or install it from a terminal (replace `x86_64` with `aarch64` on ARM machines):
+Two install flows are supported (replace `x86_64` with `aarch64` on ARM machines). Both also upgrade over an existing `resuflow` package.
+
+**Option 1 — install straight from the release URL (no local file):**
 
 ```bash
+sudo pacman -U https://github.com/exolithelabs/resuflow/releases/latest/download/resuflow-linux-x86_64.pkg.tar.zst
+```
+
+To pin an exact release instead of latest, use its versioned URL:
+
+```bash
+sudo pacman -U "https://github.com/exolithelabs/resuflow/releases/download/v0.1.1/resuflow-0.1.1-1-x86_64.pkg.tar.zst"
+```
+
+**Option 2 — download to a local folder first, then install the local file:**
+
+```bash
+cd ~/Downloads # or any folder you choose
 curl -fsSLO \
   https://github.com/exolithelabs/resuflow/releases/latest/download/resuflow-linux-x86_64.pkg.tar.zst{,.sha256}
-sha256sum -c resuflow-linux-x86_64.pkg.tar.zst.sha256
-sudo pacman -U resuflow-linux-x86_64.pkg.tar.zst
+sha256sum -c resuflow-linux-x86_64.pkg.tar.zst.sha256 # optional but recommended
+sudo pacman -U ./resuflow-linux-x86_64.pkg.tar.zst
+```
+
+If the file was already saved via the browser, just `cd` to that folder (or pass the full path) and install it:
+
+```bash
+cd ~/Downloads # or wherever the file was saved
+sudo pacman -U ./resuflow-linux-x86_64.pkg.tar.zst
+# Absolute paths work too:
+sudo pacman -U "$HOME/Downloads/resuflow-linux-x86_64.pkg.tar.zst"
 ```
 
 Run it with:
@@ -240,7 +264,7 @@ If both secrets are absent, the workflow publishes the unsigned tagged installer
 
 ### Linux releases
 
-The [desktop downloads workflow](.github/workflows/desktop.yml) builds the Arch Linux `resuflow` pacman package on every `v*` tag (and on manual runs). Tagged builds publish the `.pkg.tar.zst` plus its `.sha256` checksum, the source tarball and vendored npm/Cargo caches that feed `distro/arch/PKGBUILD`, and a GitHub build-provenance attestation covering all of them. The `verify-linux` job installs the package into a fresh `archlinux:base` container, runs the desktop entry, CLI, and bundled Node sidecar end to end, and blocks publication if any of it fails.
+The [desktop downloads workflow](.github/workflows/desktop.yml) builds the Arch Linux `resuflow` pacman package on every `v*` tag (and on manual runs). Tagged builds publish the `.pkg.tar.zst` plus its `.sha256` checksum, the source tarball and vendored npm/Cargo caches that feed `distro/arch/PKGBUILD`, and a GitHub build-provenance attestation covering all of them. The `verify-linux` job installs the package into a fresh `archlinux:base` container via both `pacman -U <url>` and `pacman -U <local file>`, upgrades over the existing install, runs the desktop entry, CLI, and bundled Node sidecar end to end, and blocks publication if any of it fails.
 
 Rebuild the exact release sources yourself with the checked-in PKGBUILD:
 
@@ -249,7 +273,7 @@ cd distro/arch
 makepkg -s
 ```
 
-Pacman treats x86_64 and aarch64 as separate packages; the release filename carries the architecture (`resuflow-<version>-1-x86_64.pkg.tar.zst`).
+Pacman treats x86_64 and aarch64 as separate packages; the versioned release filename carries the version, pkgrel, and architecture (`resuflow-<version>-1-x86_64.pkg.tar.zst`). Each release also publishes a stable alias (`resuflow-linux-x86_64.pkg.tar.zst`) so the README and product website can use permanent latest-release download links; use the versioned filename to pin an exact release.
 
 ### Version management
 
@@ -266,10 +290,12 @@ GitHub Actions rejects a version tag that does not match the packaged version.
 ### Updating
 
 - **Windows:** download and run the newer installer over the existing installation.
-- **Linux (Arch):** download the newer `resuflow-linux-<arch>.pkg.tar.zst` and install it over the existing package:
+- **Linux (Arch):** install the newer package over the existing one, either straight from its URL or from a locally downloaded file:
 
 ```bash
-sudo pacman -U resuflow-linux-x86_64.pkg.tar.zst
+sudo pacman -U https://github.com/exolithelabs/resuflow/releases/latest/download/resuflow-linux-x86_64.pkg.tar.zst
+# or, from the folder holding the downloaded package:
+sudo pacman -U ./resuflow-linux-x86_64.pkg.tar.zst
 ```
 
 The app checks GitHub's latest public release in the background and displays a dismissible notification when a newer semantic version is available. Users can also run a fresh check from **Settings > Check for updates**. This uses GitHub's public API without credentials, is cached, and never blocks offline work. Automatic download and installation through the Tauri updater are not enabled yet; that requires a final HTTPS update-manifest URL and a separate updater-signing key pair.

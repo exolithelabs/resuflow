@@ -37,6 +37,19 @@ function gitGrep(pattern) {
   }
 }
 
+function gitGrepLines(pattern) {
+  try {
+    return execFileSync(
+      'git',
+      ['grep', '-n', '-e', pattern, '--', '.', ':!scripts/distro-check.mjs'],
+      { cwd: repoRoot, encoding: 'utf8' },
+    ).trim();
+  } catch (error) {
+    // git grep exits 1 when nothing matches.
+    return String(error.stdout || '').trim();
+  }
+}
+
 // --- PKGBUILD vs manifests ---
 const version = String(packageJson.version);
 const pkgver = pkgbuild.match(/^pkgver=([^\s]+)/m)?.[1];
@@ -95,6 +108,20 @@ for (const pattern of ['flatpak.exolithelabs', 'exolithelabs-flatpak-repo', 'FLA
   const hits = gitGrep(pattern);
   check(hits === '', `Tracked files must not mention retired pattern ${pattern}, found: ${hits || '(none)'}.`);
 }
+
+// Guard against the retired portable .tar.zst + install.sh distribution returning.
+for (const pattern of ['build-linux-tarball', 'linux/install.sh', 'linux/uninstall.sh', '~/.local']) {
+  const hits = gitGrep(pattern);
+  check(hits === '', `Tracked files must not mention retired pattern ${pattern}, found: ${hits || '(none)'}.`);
+}
+
+// Every tracked .tar.zst reference must be the pacman package.
+const tarballRefs = gitGrepLines('.tar.zst')
+  .split('\n')
+  .map((line) => line.trim())
+  .filter(Boolean)
+  .filter((line) => !line.includes('.pkg.tar.zst'));
+check(tarballRefs.length === 0, `Tracked files must only reference the pacman .pkg.tar.zst, found: ${tarballRefs.join('; ') || '(none)'}.`);
 
 if (failures.length > 0) {
   console.error(`Distro packaging check failed:\n${failures.map((failure) => `  - ${failure}`).join('\n')}`);
